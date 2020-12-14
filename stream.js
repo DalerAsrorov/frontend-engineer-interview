@@ -39,6 +39,11 @@ z.subscribe((value) => console.log(value + 10));
 z.subscribe((value) => console.log(value + 20));
 z.push(3);
 
+// Expected output:
+// 3
+// 13
+// 23
+
 // a -------1------2----3
 // map -----\------\----\
 // b --------2------4----6
