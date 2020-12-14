@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Draggable Button</title>
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #button {
+            cursor: pointer;
+            background-color: teal;
+            width: 50px;
+            height: 50px;
+            border: none;
+            outline: none;
+            border-radius: 50px;
+
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #overlay {
+            background-color: red;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="overlay"></div>
+    <button id="button" draggable="true"></button>
+
+    <script defer>
+        let overlay = document.getElementById('overlay');
+        let button = document.getElementById('button');
+        let prevEvent = null;
+
+        function haveSameCoords(prev, next) {
+            if (!prev) {
+                return false;
+            }
+            return prev.clientX === next.clientX && prev.clientY === next.clientY;
+        }
+
+        function changeOverlayBackgroundColor(event) {
+            if (event.clientX === 0 && event.clientY === 0) {
+                overlay.style.opacity = "0";
+                return;
+            }
+
+            const maxY = window.innerHeight / 2;
+            const y = Math.abs(event.clientY - maxY);
+            const pY = y / maxY;
+
+            const maxX = window.innerWidth / 2;
+            const x = Math.abs(event.clientX - maxX);
+            const pX = x / maxX;
+
+            overlay.style.opacity = String(Math.max(pY, pX));
+        }
+
+        document.addEventListener('drag', (event) => {
+            if (event.target === button) {
+                if (prevEvent && !haveSameCoords(prevEvent, event)) {
+                    changeOverlayBackgroundColor(event);
+                }
+                prevEvent = event;
+            }
+        })
+    </script>
+</body>
+</html>

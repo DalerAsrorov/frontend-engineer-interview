@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vue Emulator</title>
+</head>
+<body>
+    <div id="app">
+        Look at this amazing message: {{ message }}... and another one {{ message }}, what's the {{ message }}
+        <p>
+            {{ description }} don't mise that!
+        </p>
+        <p>
+            just a simple text
+        </p>
+    </div>
+
+    <script defer>
+        class Vue {
+            constructor(options) {
+                this.el = document.querySelector(options.el);
+                this.data = options.data;
+
+                this.render();
+            }
+
+            render() {
+                let stack = [this.el];
+
+                while (stack.length) {
+                    let top = stack.pop();
+
+                    if (top.childNodes.length) {
+                        stack.push(...top.childNodes);
+                    }                    
+                    if (top.nodeType === Node.TEXT_NODE) {
+                        console.log(top);
+                        this._replaceText(top);
+                    }
+                }
+            }
+
+           _replaceText(node) {
+               let text = node.textContent;
+               let result = "";
+
+               let state = 0;
+               let cursor = 0;
+
+               for (let i = 0; i < text.length - 1; i++) {
+                   switch(state) {
+                       case 0:
+                           if (text[i] === "{" && text[i + 1] === "{") {
+                               state = 1;
+                               result += text.substring(cursor, i);
+                               cursor = i;
+                           }
+                           break;
+                       case 1:
+                           if (text[i] === "}" && text[i + 1] === "}") {
+                               state = 0;
+                               result += this.data[text.substring(cursor + 2, i - 1).trim()];
+                               cursor = i + 2;
+                           }
+                           break;
+                        default:
+                   }
+               }
+
+               result += text.substring(cursor);
+               node.textContent = result;
+           }
+        }
+
+        var app = new Vue({
+            el: '#app',
+            data: {
+                message: 'Hello Vue!',
+                description: 'This is my first Vue emulation app.'
+            }
+        });
+    </script>
+</body>
+</html>

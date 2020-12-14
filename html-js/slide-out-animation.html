@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slide Out Animations</title>
+    <style>
+        #box {
+            width: 50px;
+            height: 50px;
+            background-color: fuchsia;
+        }
+    </style>
+</head>
+<body>
+    <div id="box"></div>
+
+    <script defer>
+        const box = document.getElementById('box');
+
+        function slideOut(element, duration) {
+            const initial = 0;
+            const target = window.innerWidth;
+            const start = new Date();
+
+            const loop = () => {
+                const time = (new Date().getTime() - start.getTime()) / 1000; // seconds
+                const value = (time * target) / duration + initial;
+
+                console.log({value});
+
+                box.style.transform = `translateX(${value}px)`;
+
+                if (value >= target) {
+                    box.style.transform = '';
+                    return;
+                }
+
+                window.requestAnimationFrame(loop);
+            };
+
+            window.requestAnimationFrame(loop);
+        }
+        
+        box.addEventListener('click', (event) => {
+            slideOut(event.target, 5);
+        });
+    </script>
+</body>
+</html>

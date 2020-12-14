@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect 4 Game</title>
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+        }
+
+        main {
+            width: 100vw;
+            height: 100vh;
+            background-color: wheat;
+        }
+
+        #gameContainer {
+            width: 85%;
+            height: 85%;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid grey;
+
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #circlePlaceholder {
+            flex: 0 100px;
+            padding: 5px;
+            background-color: #fff;
+            border-bottom: 1px dotted steelblue;
+            position: relative;
+        }
+
+        #board {
+            background-color: #fff;
+            flex: 1;
+        }
+
+        #board table {
+            width: 100%;
+            height: 100%;
+            table-layout: fixed;
+        }
+
+        #phCircle {
+            position: absolute;
+            margin: 0;
+            left:0;
+            top: 5px;
+        }
+
+        .circle {
+            cursor: pointer;
+            outline: none;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 1px dotted steelblue;
+        }
+
+        .circle:hover {
+            border: 2px solid skyblue;
+        }
+
+        .column {
+            text-align: center;
+        }
+
+        #playerPanel {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            padding: 10px;
+        }
+
+    </style>
+</head>
+<body>
+    <main>
+        <div id="gameContainer">
+            <div id="playerPanel"></div>
+            <div id="circlePlaceholder">
+                <figure id="phCircle" class="circle"></figure>
+            </div>
+            <div id="board"></div>
+        </div>
+    </main>
+
+    <script defer>
+        let gameContainer = document.getElementById('gameContainer');
+        let circlePlaceholder = document.getElementById('circlePlaceholder');
+        let board = document.getElementById('board');
+        let phCircle = document.getElementById('phCircle');
+        let playerPanel = document.getElementById('playerPanel');
+
+        const PlayerLogic = (function() {
+            const PLAYER_ONE_ID = 0;
+            const PLAYER_TWO_ID = 1;
+            const PLAYER_ONE_COLOR = 'red';
+            const PLAYER_TWO_COLOR = 'blue';
+            let player = PLAYER_ONE_ID;
+            let hasWinner = false;
+
+            // returns the player winner ID if someone won
+            function determineWinner(xPlaced, yPlaced) {
+                // check the row and column with repect
+                // to the placed cell step
+                // TODO: check diagonal as well
+                
+                console.log({xPlaced, yPlaced});
+                // check the row at yPlaced
+                let counter = 0;
+                for (let j = 0; j < grid[0].length; j++) {
+                    if (grid[yPlaced][j] === player) {
+                        counter++;
+                        if (counter === 4) {
+                            hasWinner = true;
+                            return player;
+                        }
+                    } else {
+                        counter = 0;
+                    }
+                }
+
+                // check the column at xPlaced
+                counter = 0;
+                for (let i = 0; i < grid.length; i++) {
+                    if (grid[i][xPlaced] === player) {
+                        counter++;
+                        if (counter === 4) {
+                            hasWinner = true;
+                            return player;
+                        }
+                    } else {
+                        counter = 0;
+                    }
+                }
+
+                return null;
+            }
+            function getCurrentPlayer() {
+                return player;
+            }
+            function getCurrentPlayerColor() {
+                return player === PLAYER_ONE_ID ? PLAYER_ONE_COLOR : PLAYER_TWO_COLOR;
+            }
+            function getCurrentPlayerText() {
+                return player === PLAYER_ONE_ID ? 'Player One' : 'Player Two';
+            }
+            function setBoardGrid(x) {
+                x = parseInt(x);
+                let y = 0;
+
+                for (y = grid.length - 1; y >= 0; y--) {
+                    if (grid[y][x] === null) {
+                        grid[y][x] = player;
+                        break;
+                    }
+                }
+
+                if (y < 0) {
+                    return null;
+                }
+
+                return {x, y};
+            }
+            function setNextPlayer() {
+                player = player === PLAYER_ONE_ID ? 1 : 0;
+                return player;
+            }
+            function getIfHasWinner() {
+                return hasWinner;
+            }
+            function resetGame() {
+                player = PLAYER_ONE_ID;
+                hasWinner = false;
+                grid = buildGrid(6, 7);
+                drawGrid(grid);
+                updateGameContent();
+            }
+
+            return {
+                determineWinner,
+                getCurrentPlayer,
+                getCurrentPlayerColor,
+                getCurrentPlayerText,
+                getIfHasWinner,
+                setNextPlayer,
+                setBoardGrid,
+                resetGame
+            }
+        })();
+
+        function buildGrid(rows, column) {
+            let matrix = [];
+
+            for (let i = 0; i < rows; i++) {
+                matrix.push([]);
+                for (let j = 0; j < column; j++) {
+                    matrix[i].push(null);
+                }
+            }
+
+            return matrix;
+        }
+
+        function drawGrid(matrix) {
+            let gridHtml = '<table><tbody>';
+
+            for (let i = 0; i < matrix.length; i++) {
+                gridHtml += '<tr class="row">';
+                for (let j = 0; j < matrix[0].length; j++) {
+                    gridHtml += `<td class="column"><button data-x=${j} data-y=${i} class="circle" type="button"></button></td>`;
+                }
+                gridHtml += '</tr>';
+            }
+
+            gridHtml += '</tbody></table>'
+
+            board.innerHTML = gridHtml;
+        }
+
+        function updatePlayerPanel(customText) {
+            playerPanel.textContent = `${PlayerLogic.getCurrentPlayerText()}'s turn`;
+        }
+        function updateCellView(x, y, color) {
+            const cellEl = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+
+            cellEl.style.backgroundColor = color;
+        }
+        function updatePlaceholderColor() {
+            phCircle.style.backgroundColor = PlayerLogic.getCurrentPlayerColor();
+        }
+        function updateGameContent() {
+            updatePlayerPanel();
+            updatePlaceholderColor();
+        }
+
+        // Initial load
+        PlayerLogic.resetGame();
+
+        board.addEventListener('mouseover', (event) => {
+            const x = event.clientX;
+
+            const xPos = x - Math.abs(window.innerWidth - gameContainer.offsetWidth);
+
+            phCircle.style.left = `${xPos + phCircle.offsetWidth}px`;
+        }, true);
+
+        board.addEventListener('click', (event) => {
+            if (event.target.tagName.toLowerCase() === 'button' && !PlayerLogic.getIfHasWinner()) {
+                let btn = event.target;
+                const {x, y} = btn.dataset;
+                const xyParams = PlayerLogic.setBoardGrid(x);
+
+                if (xyParams) {
+                    const {x: xFill, y: yFill} = xyParams;
+
+                    updateCellView(xFill, yFill, PlayerLogic.getCurrentPlayerColor());
+                    const playerWinner = PlayerLogic.determineWinner(xFill, yFill);
+
+                    if (playerWinner === null) {
+                        PlayerLogic.setNextPlayer();
+                        updateGameContent();
+                    } else {
+                        const resetBtnId = 'resetGameBtn';
+                        playerPanel.innerHTML = `
+                            ${PlayerLogic.getCurrentPlayerText()} WON THE GAME!
+                            <button id="${resetBtnId}">Reset Game</button>
+                        `;
+                        playerPanel.style.color = PlayerLogic.getCurrentPlayerColor();
+
+                        document.getElementById(resetBtnId).addEventListener('click', () => {
+                            playerPanel.style.color = 'inherit';
+                            PlayerLogic.resetGame();
+                        });
+                    }
+                }
+            }
+        });
+
+    </script>
+</body>
+</html>

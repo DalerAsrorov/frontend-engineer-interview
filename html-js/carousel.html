@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basic Carousel</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+        }
+
+        ul#list {
+            display: flex;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        ul#list .gif-list-item {
+            list-style-type: none;
+            display: flex;
+            flex-direction: column;
+        }
+
+        ul#list .gif-title {
+            flex: 0 0 40px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 500;
+            color: dodgerblue;
+        }
+
+        ul#list .gif-image-wrapper {
+            display: flex;
+            flex: 1;
+        }
+
+        ul#list .gif-image-wrapper img {
+            height: 100%;
+            max-height: 350px;
+        }
+
+        .wrapper {
+            width: 70%;
+            margin: 0 auto;
+        }
+
+        #gifSearchForm {
+            padding: 1em;
+            border: 1px solid lightpink;
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        #gifSearchForm input {
+            font-size: 28px;
+            padding: 10px;
+            flex: 1;
+        }
+
+        #gifSearchForm button {
+            flex: 0 25%;
+            font-size: 24px;
+        }
+
+        #listContainer {
+            position: relative;
+            display: none;
+            height: 400px;
+        }
+
+        #listContainer button.direction {
+            font-size: 3em;
+            align-items: center;
+            color: cornsilk;
+            border: none;
+            border-radius: 50%;
+            outline: none;
+            width: 1.5em;
+            height: 1.5em;
+            background: transparent;
+            cursor: pointer;
+
+            position: absolute;
+            top: 30%;
+        }
+
+        #listContainer button.prev {
+            left: 0;
+            
+        }
+
+        #listContainer button.next {
+            right: 0;
+        }
+
+        #inputContainer {
+            margin-bottom: 1rem;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div id="inputContainer">
+            <form id="gifSearchForm" action="javascript:void(0);" onsubmit="submitSearch()">
+                <input type="text" placeholder="Search for gifs..." name="searchValue" id="gifSearch">
+                <button type="submit">Search</button>
+            </form>
+        </div>
+        <div id="listContainer">
+            <ul id="list">
+            </ul>
+            <button class="direction prev" onclick="show(-4)">&lt;</button>
+            <button class="direction next" onclick="show(+4)">&gt;</button>
+        </div>
+    </div>
+
+    <script>
+        let listContainer = document.getElementById('listContainer');
+        let list = document.getElementById('list');
+
+        const GifyApi = (function() {
+            const key = 'sAtTY5aje5OfnDG0cA3Hp05UmltoLtf3';
+            let cache = {
+                lastQuery: ''
+            }
+
+            function generateSearchEndpoint(query, offset) {
+                const endpoint = `https://api.giphy.com/v1/gifs/search?api_key=${key}&q=${query}&limit=25&offset=${offset}&rating=g&lang=en`;
+                return endpoint;
+            }
+
+            function searchGifies(query, offset = 0) {
+                return fetch(generateSearchEndpoint(query, offset))
+                    .then(response => response.json())
+                    .catch((err) => console.log('err', err));
+            }
+
+            function setLastQuery(query) {
+                cache.lastQuery = query;
+            }
+
+            return {
+                cache,
+                generateSearchEndpoint,
+                searchGifies,
+                setLastQuery
+            }
+        })();
+
+        const Paginator = (function() {
+            let index = 0;
+            const gallerySelector = 'ul .gif-list-item';
+
+            function getNext(increase) {
+                const elements = document.querySelectorAll(gallerySelector);
+                index += increase;
+                index = Math.min(Math.max(index, 0), elements.length - 1);
+
+                console.log('scroll happening', index);
+                elements[index].scrollIntoView({behavior: 'smooth'});
+            }
+
+            function goBack() {
+                const elements = document.querySelectorAll(gallerySelector);
+                index = 0;
+                elements[index].scrollIntoView({behavior: 'smooth'});
+            }
+
+            return {
+                index,
+                goBack,
+                getNext
+            }
+        })();
+
+        function displayGifies(data, element, isList) {
+            let itemTag = isList ? 'li' : 'div';
+            let accumStr = '';
+
+            data.forEach((gif) => {
+                accumStr += `
+                    <${itemTag} class="gif-list-item">
+                        <div class="gif-image-wrapper">
+                            <img class="gif-image" src="${gif.images.original.url}" />
+                        </div>
+                        <h4 class="gif-title">${gif.title}</h4>
+                    </${itemTag}>
+                `;
+            });
+
+            element.innerHTML += accumStr;
+        }
+
+        function show(increase) {
+            Paginator.getNext(increase);
+        }
+
+        function showListContainer(shouldShow) {
+            listContainer.style.display = shouldShow ? 'block': 'none';
+        }
+
+        function submitSearch() {
+            const form = document.forms.gifSearchForm;
+            const formData = new FormData(form);
+            const query = formData.get('searchValue').trim();
+
+            if (query !== GifyApi.cache.lastQuery) {
+                list.innerHTML = '';
+                showListContainer(false);
+
+                GifyApi.searchGifies(query).then(response => {
+                    const {data, pagination} = response;
+                    
+                    GifyApi.setLastQuery(query);
+
+                    // UI
+                    showListContainer(true);
+                    displayGifies(data, list, true);
+                    Paginator.goBack();
+                })   
+            }
+        }
+
+    </script>
+</body>
+</html>
