@@ -11,36 +11,38 @@
 class Stream {
     constructor() {
         this.subscriptions = [];
-        this.action = this._defaultAction;
+        this.mappedActions = [];
     }
 
     subscribe(callback) {
         this.subscriptions.push(callback);
     }
 
-    map(operationFunc) {
-        this.action = operationFunc;
+    map(actionFunc) {
+        this.mappedActions.push(actionFunc);
 
         return this;
     }
 
     push(opValue) {
         this.subscriptions.forEach(cb => {
-            cb(this.action.call(this, opValue));
+            if (this.mappedActions.length) {
+                this.mappedActions.forEach(action => {
+                    cb(action.call(this, opValue));
+                });
+            } else {
+                cb(opValue);
+            }
         });
-    }
-
-    _defaultAction(value) {
-        return value;
     }
 }
 
 console.log('A');
 const z = new Stream();
 z.subscribe((value) => console.log(value));
-z.subscribe((value) => console.log(value * 2));
-z.subscribe((value) => console.log(value * 3));
-z.push(2);
+z.subscribe((value) => console.log(value + 10));
+z.subscribe((value) => console.log(value + 20));
+z.push(3);
 
 // a -------1------2----3
 // map -----\------\----\
@@ -49,15 +51,19 @@ z.push(2);
 console.log('\nB');
 
 const a = new Stream();
-const b = a.map(value => value * 2);
+const b = a.map(value => value * 1 / 2);
+const c = b.map(value => value * 3);
 
-b.subscribe(console.log);
+c.subscribe(console.log);
 
-a.push(1);
-a.push(2);
-a.push(3);
+c.push(1);
+c.push(2);
+c.push(3);
 
 // expected output on console:
-// 2
-// 4
+// 0.5
+// 3
+// 1
 // 6
+// 1.5
+// 9
