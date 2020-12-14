@@ -3,11 +3,6 @@
 
 // For example,
 
-// Create a basic implementation of a streams API. The user should be able to push values to a stream,
-// and subscribe to values that are pushed to that stream.
-
-// For example,
-
 class Stream {
     constructor() {
         this.subscriptions = [];
