@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autocomomplete</title>
+
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .wrapper {
+            height: 100%;
+            width: 100%;
+        }
+
+        .search-form {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            border: 1px solid grey;
+            height: 300px;
+            width: 300px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .search-form #searchInput {
+            padding: 10px;
+            font-size: 24px;
+        }
+
+        .search-form ul#suggestions {
+            margin: 10px 0 0 0;
+            padding: 0;
+            background: white;
+            border: 1px solid lightcoral;
+            visibility: hidden;
+            overflow: auto;
+        }
+
+        .search-form ul li {
+            list-style-type: none;
+            padding: 5px;
+        }
+
+        ul#suggestions .suggested-breed {
+            padding: 5px;
+        }
+
+        ul#suggestions::-webkit-scrollbar {
+            -webkit-appearance: none;
+            width: 7px;
+        }
+
+        ul#suggestions::-webkit-scrollbar-thumb {
+            border-radius: 4px;
+            background-color: rgba(0, 0, 0, .5);
+            box-shadow: 0 0 1px rgba(255, 255, 255, .5);
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <form class="search-form" action="javascript:void(0);">
+            <input id="searchInput" type="text" placeholder="Search for cats" name="searchInput" />
+            <ul id="suggestions">
+            </ul>
+        </form>
+    </div>
+
+    <script>
+        const CatsApi = (function() {
+            let catBreedList = [
+                'American Bobtail',
+                'American Shorthair',
+                'British Longhair',
+                'Chausie',
+                'Cornish Rex',
+                'Devon Rex',
+                'Egyptian Mau',
+                'Exotic Shorthair',
+                'Kinkalow',
+                'Lambkin',
+                'LaPerm',
+                'Lykoi',
+                'Ocicat',
+                'Peterbald',
+                'Selkirk Rex',
+                'Selkirk Rex',
+                'Savannah',
+                'Serengeti',
+                'Toyger',
+                'Turkish Angora',
+                'Turkish Vankedisi',
+                'Ukrainian Levkoy',
+                'York Chocolate'
+            ];
+
+            function getSuggestions(input) {
+                return new Promise((res, rej) => {
+                    setTimeout(() => {
+                        const list = catBreedList.filter((catBreed) =>
+                            catBreed
+                                .trim()
+                                .toUpperCase()
+                                .includes(input.trim().toUpperCase())
+                        );
+                        console.log({list});
+                        res(list);
+                    }, 1000);
+                });
+            }
+
+            return {
+                getSuggestions,
+                total: catBreedList.length
+            }
+        })();
+
+        function debounced(fn, ms) {
+            let timerId;
+
+            return function(...args) {
+                if (timerId) {
+                    clearTimeout(timerId);
+                }
+                timerId = setTimeout(() => {
+                    fn.call(this, ...args);
+                }, ms);
+            }
+        }
+
+        function updateSuggestionList(sugBreeds = [], container) {
+            let accum = '';
+
+            sugBreeds.forEach((breed) => {
+                accum += `<li class="suggested-breed">${breed}</li>`;
+            });
+
+            container.style.visibility = sugBreeds.length === 0 ? 'hidden' : 'visible';
+
+            container.innerHTML = accum;
+        }
+
+        window.onload = function() {
+            let searchInput = document.getElementById('searchInput');
+            let suggestionsUl = document.getElementById('suggestions');
+
+            CatsApi.getSuggestions('').then((suggestedBreeds) => {
+                updateSuggestionList(suggestedBreeds, suggestionsUl);
+            });
+
+            function searchOnInput(event) {
+                event.preventDefault();
+                const inputValue = event.target.value;
+
+                CatsApi.getSuggestions(inputValue).then((suggestedBreeds) => {
+                    updateSuggestionList(suggestedBreeds, suggestionsUl);
+                });
+            }
+
+            searchInput.addEventListener('input', debounced(searchOnInput, 300));
+        }
+    </script>
+</body>
+</html>
