@@ -10,8 +10,8 @@ var addStrings = function (num1, num2) {
     let result = '';
 
     while (i >= 0 || j >= 0) {
-        const a = i >= 0 ? Number(num1.charAt(i)) : 0;
-        const b = j >= 0 ? Number(num2.charAt(j)) : 0;
+        const a = i >= 0 ? num1.charAt(i) - '0' : 0;
+        const b = j >= 0 ? num2.charAt(j) - '0' : 0;
 
         sum = a + b + carry;
         carry = ~~(sum / 10);
