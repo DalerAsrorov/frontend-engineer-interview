@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Progress Bars</title>
+
+    <style>
+        .container {
+            width: 80%;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+        }
+
+        .start-btn {
+            display: block;
+            padding: 0.5em;
+            margin-bottom: 1rem;
+        }
+
+        .progress {
+            height: 40px;
+            background-color: lightblue;
+            width: 100%;
+        }
+
+        .bar {
+            width: 0%;
+            height: 100%;
+            background-color: #438fdb;
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <h2 class="header">
+            Progress bars
+        </h2>
+        <div class="content">
+            <button class="start-btn" onclick="handleStartNewBar()" id="newBarStarter">Start New Bar</button>
+            <div id="barsContainer"></div>
+        </div>
+    </main>
+    
+    <script>
+        let barsContainer = document.getElementById('barsContainer');
+        let createBtn = document.getElementById('newBarStarter');
+
+        const MAX_BARS_RUNNING = 4;
+        let currentlyRunning = 0;
+        let queue = [];
+
+        function startBarAnimation(barEl, done, startPoint = 0, secondsTotal = 3000) {
+            let currWidth = startPoint;
+            let intervalRef = setInterval(animateBar, secondsTotal / 100);
+
+            function animateBar() {
+                if (currWidth >= 100) {
+                    currWidth = 0;
+                    clearInterval(intervalRef);
+                    done();
+                } else {
+                    currWidth += 1;
+                    barEl.style.width = `${currWidth}%`;
+                }
+            }
+        }
+
+        function buildProgressBar(container) {
+            let progress = document.createElement('div');
+            let bar = document.createElement('div');
+            progress.className = 'progress';
+            bar.className = 'bar';
+
+            progress.append(bar);
+
+            container.appendChild(progress);
+
+            return bar;
+        }
+
+        function handleStartNewBar() {
+            queue.push(buildProgressBar(barsContainer));
+
+            runProgressBars();
+        }
+
+        function runProgressBars() {
+            while (queue.length && currentlyRunning < MAX_BARS_RUNNING) {
+                currentlyRunning++;
+                let nextBar = queue.shift();
+
+                startBarAnimation(nextBar, () => {
+                    currentlyRunning--;
+                    runProgressBars();
+                });
+            }
+        }
+    </script>
+</body>
+</html>
