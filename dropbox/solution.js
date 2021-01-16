@@ -4,6 +4,7 @@ const COMMANDS = {
     BACKSPACE: 'BACKSPACE',
     UNDO: 'UNDO',
     REDO: 'REDO',
+    SELECT: 'SELECT',
 };
 
 function sortInput(input) {
@@ -14,15 +15,29 @@ const textEditor = (input) => {
     let output = [];
     let undoHistory = [];
     let redoHistory = [];
+    let selectLine = [];
 
     sortInput(input);
 
     for (let line of input) {
-        const [order, command, val] = line;
+        // val2 is used primarily in "SELECT" operation
+        const [order, command, val, val2] = line;
+
         switch (command) {
             case COMMANDS.APPEND:
-                output.push(val);
-                undoHistory.push([order, command, output.length - 1, val]);
+                let outputValue = val;
+
+                if (selectLine.length) {
+                    const startSlice = selectLine[2];
+                    const endSlice = selectLine[3];
+
+                    outputValue = output.pop() || '';
+                    outputValue = outputValue.slice(0, startSlice) + val + outputValue.slice(endSlice);
+                    selectLine.pop();
+                }
+
+                output.push(outputValue);
+                undoHistory.push([order, command, output.length - 1, outputValue]);
                 redoHistory.pop();
                 break;
             case COMMANDS.BACKSPACE:
@@ -30,9 +45,18 @@ const textEditor = (input) => {
                 const lastWord = output[lastIndex];
                 const lastChar = lastWord.charAt(lastIndex);
 
-                output[lastIndex] = lastWord.slice(0, -1);
+                if (selectLine.length) {
+                    const startSlice = selectLine[2];
+                    const endSlice = selectLine[3];
+
+                    output[lastIndex] = lastWord.slice(0, startSlice) + lastWord.slice(endSlice);
+                } else {
+                    output[lastIndex] = lastWord.slice(0, -1);
+                }
+
                 undoHistory.push([order, command, lastIndex, lastChar]);
                 redoHistory.pop();
+                selectLine.pop();
                 break;
             case COMMANDS.UNDO:
                 if (undoHistory.length) {
@@ -59,6 +83,9 @@ const textEditor = (input) => {
                         output[valueIndex] = output[valueIndex] + value;
                     }
                 }
+                break;
+            case COMMANDS.SELECT:
+                selectLine = [order, command, val, val2];
                 break;
             default:
                 break;
@@ -130,6 +157,17 @@ const SAMPLE11 = [
     ["1548185072722", "APPEND", "ey"],
     ["1548185072721", "APPEND", "H"]
 ];
+const SAMPLE12 = [
+    ["1548185072721", "APPEND", "Hello"],
+    ["1548185072722", "SELECT", "1", "3"],
+    ["1548185072723", "BACKSPACE"]
+];
+const SAMPLE13 = [
+    ["1548185072721", "APPEND", "Hello"],
+    ["1548185072722", "SELECT", "2", "5"],
+    ["1548185072723", "APPEND", "y there"]
+];
+
 
 console.log(textEditor(SAMPLE1) === "Hey there!");
 console.log(textEditor(SAMPLE2) === "Hey y");
@@ -142,3 +180,5 @@ console.log(textEditor(SAMPLE8) === "Hey there");
 console.log(textEditor(SAMPLE9) === "Hey");
 console.log(textEditor(SAMPLE10) === " there");
 console.log(textEditor(SAMPLE11) === "Hey");
+console.log(textEditor(SAMPLE12) === "Hlo");
+console.log(textEditor(SAMPLE13) === "Hey there");
